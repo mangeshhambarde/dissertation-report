@@ -1,0 +1,58 @@
+\chapter{Planning}
+
+\section{Risk Analysis}
+
+Given below is the risk register table which has all risks possible in the project, the results of the risks, and actions that can be taken to mitigate those risks.
+
+\begin{table}[ht]
+\center
+\begin{tabular}{|p{0.75cm}|p{5cm}|p{1.75cm}|p{1cm}|p{1.75cm}|p{4cm}|}
+\hline
+Rank & Hazard/Impact & Likelihood & Impact & Exposure & Action\\
+\hline
+1 & Underestimation of time needed; may not complete project goals & 3 & 4 & 12 & Identify essential and non-essential parts of project, build early prototype \\
+\hline
+2 & Unfamiliarity with advanced math/ML; may take longer than expected, thus disturb plan & 4 & 3 & 12 & Have planned period of study as part of plan \\
+\hline
+3 & Insufficient compute power available; may be unable to run code till completion & 2 & 4 & 8 & Use Voicebase grid, ask supervisor for compute resources \\
+\hline
+4 & Insufficient contact with supervisor; may take longer to understand concepts, thus disturb plan & 2 & 3 & 6 & Schedule repeating meetings with supervisor in advance \\
+\hline
+5 & Lack of Kaldi experience; may take longer than expected, thus disturb plan & 2 & 3 & 6 & Understand DIHARD baseline system, build fully working early prototype \\
+\hline
+\end{tabular}
+\caption{Risk register}
+\label{tab:risks}
+\end{table}
+
+
+\section{Project Plan}
+
+Given below is a Gantt Chart that shows the timeline of the requirements of the project.
+
+\begin{figure}[h]
+\begin{center}
+\begin{ganttchart}{1}{12}
+\gantttitle{Week number}{12} \\
+\gantttitlelist{1,...,12}{1} \\
+\ganttbar{Acoustic Beamforming}{1}{1} \\
+\ganttlinkedbar{Speech Enhancement}{2}{3} \ganttnewline
+\ganttlinkedbar{Feature Extraction}{4}{4} \ganttnewline
+\ganttlinkedbar{Speaker Activity Detection}{5}{6} \ganttnewline
+\ganttlinkedbar{Segmentation and Clustering}{7}{11} \ganttnewline
+\ganttlinkedbar{Scoring}{12}{12} \ganttnewline
+\end{ganttchart}
+\end{center}
+\caption{Project Gantt Chart}
+\end{figure}
+
+\section{Dependencies}
+\begin{itemize}
+	\item The project depends on the Acoustic Beamforming task only in the multi-channel audio case. The single-channel audio case does not need beamforming.
+	\item Speech enhancement is optional and can be skipped, but performance of the system can decrease.
+	\item All other tasks are dependent on the previous task.
+\end{itemize}
+
+\section{Time-critical tasks}
+The most time critical task is segmentation and clustering by far, as is the core of the diarization process.
+

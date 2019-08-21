@@ -1,65 +1,11 @@
-\chapter{Analysis}
+\chapter{Baseline setup}
 
-\section{Project Requirements}
-Given below are the parts of the project that need to be implemented, in order. A short description of possible implementation techniques is given. They are mostly taken from DIHARD I systems.
+\section{Overview}
 
-	\subsection{Acoustic Beamforming}
-	In case of multi-channel data (for evaluation tracks 3 and 4), acoustic beamforming \cite{anguera2007acoustic} can be done using the free and open-source toolkit BeamformIt \cite{anguera2006beamformit}.
+\section{Kaldi toolkit}
 
-	\subsection{Speech Enhancement}
-	A long short-term memory (LSTM) based speech denoising model is used in the USTC systems \cite{sun2018speaker,sunustc}. A NN autoencoder consisting of 3 hidden layers with 1500 neurons in each layer is used in the BUT system \cite{inproceedings}.
-	
-	\subsection{Feature Extraction}
-	The system in the master's thesis \cite{parthe-thesis} uses first 19 MFCC features for all subsystems. The sliding windows are 30 ms wide and have a 20 ms frame overlap.
-	
-	The ViVoLab system in \cite{Vials2018DIHARD2I} uses acoustic feature vectors of 20 MFCC including C0 (C0-C19) over a 25 ms hamming window every 10 ms (15 ms overlap).
-		
-	\subsection{Speaker Activity Detection}
-	A neural network (NN) trained for binary classification of speech frames is trained in the BUT system \cite{inproceedings}, having 288-dimensional input which is derived from 31 frames of 15 log Mel filter-bank outputs and 3 pitch features. The NN has 2 hidden layers of 400 sigmoid neurons and was trained on the Fisher English corpus \cite{cieri2004fisher}.
-	
-	A BLSTM-DNN trained with the CURRENNT toolkit \cite{JMLR:v16:weninger15a} on a subset of 8kHz telephony from the Switchboard corpus \cite{godfrey1992switchboard} has been used in the JHU system \cite{sell2018diarization}. It also talks about using a TDNN \cite{21701} \cite{peddinti2015time} with 16kHz microphone data from European Parliament videos.
-	
-	\subsection{Segmentation and Clustering}
-	The JHU system \cite{sell2018diarization} clusters x-vector embeddings \cite{garcia2017speaker} trained on wideband microphone data, then performing Variational-Bayes refinement \cite{sell2015diarization}.
-			
-	\subsection{Scoring}
-	The scoring is done using the dscore tool \cite{dscore}. The system outputs are generated as RTTM files \cite{ryant2018first}, which are fed to the tool along with the reference RTTM files.
+\section{Speech Activity Detection}
 
-\section{Evaluation}
-	The evaluation will be done according to the official DIHARD II evaluation criteria \cite{ryant2019second}.
-	
-	\subsection{Overview of DIHARD II evaluation criteria}
-	\subsubsection{Input conditions}
-		The DIHARD II challenge has 2 possible input conditions: single channel audio and multichannel audio. In the single channel condition, each recording session has a single channel of audio. One RTTM file should be generated for this channel. In the multichannel condition, each recording session contains output from one or more distant microphone arrays, each containing multiple channels. Participants are expected to produce  RTTM files for each array separately.
-		
-	\subsubsection{SAD conditions}
-	Two different SAD conditions are possible. The first is reference SAD, where systems are provided with a reference speaker activity segmentation. The second is system SAD, where systems are responsible to do their own speaker activity detection.
-	
-	\subsubsection{Evaluation tracks}
-	Combining the above two input conditions and two SAD conditions, four evaluation tracks are possible. At least one of the two tracks with reference SAD are mandatory for participation.
-	
-	\subsubsection{Scoring}
-	System output is ranked using the DER and JER metrics. No forgiveness collar is applied to reference segments prior to scoring, and overlapping speech is also evaluated. Certain recordings have personal identifying information (PII), so UEM files are provided that specify exact regions that will be scored.
-	
-	\subsubsection{Training data}
-	Participants can use any publicly available or proprietary data to train the systems, except the following corpora from which the evaluation set is drawn:
-	\begin{itemize}
-		\item DCIEM Map Task Corpus (LDC96S38)
-		\item MIXER6 Speech (LDC2013S03)
-		\item Digital Archive of Southern Speech (LDC2012S03 and LDC2016S05)
-		\item any version of the SEEDLingS corpus, whether acquired via HomeBank or otherwise
-		\item DIHARD I evaluation set
-	\end{itemize}
+\section{Speaker Representation}
 
-\section{Ethical, Professional and Legal Issues}
-	\subsubsection{Ethics review}
-	Ethical review of the project was not needed, since there is no human participant data used in the project. Any personal identifying information (PII) in the datasets has already been removed by the DIHARD organizers.
-
-	\subsubsection{Issues related to BCS code of conduct}
-	\begin{itemize}
-	\item Public interest: N/A
-	\item Professional Competence and Integrity: There are many DIHARD evaluation rules that are not enforced but expected to be followed: using evaluation data for training is prohibited, manually investigating evaluation data is prohibited, using the evaluation server for hyperparameter tuning is prohibited.
-	\item Duty to Relevant Authority: LDC/CHiME-5 datasets should be kept confidential as they are not public, participants have to submit a system description document at the conclusion of the challenge.
-	\item Duty to the Profession: N/A
-	\end{itemize}
-	
+\section{Segmentation and Clustering}

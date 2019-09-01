@@ -9,6 +9,14 @@
 \usepackage[none]{hyphenat} % turn hyphenation off by default
 \usepackage{graphicx}
 \usepackage{pgfgantt}
+\usepackage{hyperref}
+\usepackage{listings}
+
+% https://tex.stackexchange.com/questions/315369/how-to-deal-with-bad-line-wrapping-of-texttt
+\newcommand*\ttvar[1]{\texttt{\expandafter\dottvar\detokenize{#1}\relax}}
+\newcommand*\dottvar[1]{\ifx\relax#1\else
+	\expandafter\ifx\string_#1\string_\allowbreak\else#1\fi
+	\expandafter\dottvar\fi}
 
 \begin{document}
 
@@ -78,7 +86,7 @@ All sentences or passages quoted in this report from other people's work have be
 \input{chapters/chapter4.tex}
 \input{chapters/chapter5.tex}
 
-\bibliographystyle{acm}
-\bibliography{main}
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv,main}
 
 \end{document}

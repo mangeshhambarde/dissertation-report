@@ -1,38 +1,83 @@
 \chapter{Experiments and Results}
 
 	\section{Baseline results}
+	The baseline results discussed here have been computed by running the 2019 baseline on the datasets from the previous year's DIHARD challenge (2018). This is because it was not possible to register for DIHARD 2019 before the deadline, and thus access to 2019 datasets was denied.
 	
+	Luckily the 2018 datasets were released as a part of the June LDC newsletter. Since the basic problem statement of the challenge remains the same as last year, the last year's datasets can still be used without any trouble. But this unfortunately means that it is no longer possible to verify the computed baseline scores with official scores, because the official scores only exist for the 2019 datasets. The only useful hint was found on the webpage at \cite{dihard2-unofficial}, which mentions a rough score of 20.71 on the 2018 development set.
+	
+	It is also important to mention that Missed Speech and False Alarm are not mentioned in any of the following experiments, because they are always constant. Missed speech is always 8.34\% for the dev set and 9.52\% for the eval set. False alarm is always zero for both. They are constant because we are working with reference SAD, so the segments that we consider speech or non-speech are fixed. Missed speech is non-zero because of error in the DIHARD reference files. The reference speech segmentation came in the form of HTK label files, and it did not match up with the reference RTTM (label files had 8.34\% and 9.52\% less speech respectively).
+	
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{|c|c|c|c|}
+			\hline
+			Dataset & DER (\%) & Speaker error (\%) & JER (\%) \\
+			\hline
+			dev & 19.96 & 11.62 & 53.92 \\
+			\hline
+			eval & 26.58 & 17.05 & 59.44 \\
+			\hline
+		\end{tabular}
+	\caption{Baseline scores.}
+	\end{table}
+	
+	The results already seem pretty good, considering that the system is not very complex. The best JHU system in DIHARD 2018 had an eval DER of 23.73\%, and that included doing Variational Bayes refinement as an extra step.
+
+		
 	\section{Using Existing Pre-trained Models}
+	The first set of experiments was to see how certain pre-trained models freely available on the Internet perform.
+	
 		\subsection{Kaldi VoxCeleb x-vector model}
+			This model was downloaded from the Kaldi models webpage \cite{kaldi_models_webpage}, and closely follows the recipe in \cite{snyder2018x}. The recipe used for training is available in Kaldi at \ttvar{egs/voxceleb/v2}. Similar to the baseline recipe, this model is also trained on a combination of VoxCeleb I and II along with augmentation. Both produce 512-dimensional x-vectors. There are two differences though:
+			\begin{itemize}
+				\item The PLDA backend included in this model is trained on the whole training data, which consists of 1,276,888 utterances. The baseline PLDA backend is trained on a subset where each segment is at least 3 seconds long.
+				\item The PLDA backend here is trained on 200 dimensional x-vectors, which are produced after LDA. The baseline PLDA backend is trained directly on 512-dimensional x-vectors.
+			\end{itemize}
+	
+			\begin{table}[h]
+			\centering
+			\begin{tabular}{|c|c|c|c|}
+				\hline
+				Dataset & DER (\%) & Speaker error (\%) & JER (\%) \\
+				\hline
+				dev & 22.86 & 14.52 & 51.74 \\
+				\hline
+				eval & 26.42 & 16.89 & 55.55 \\
+				\hline
+			\end{tabular}
+			\caption{Scores with Kaldi VoxCeleb x-vector model.}
+			\end{table}
+		
+			This has already produced a small improvement over the baseline. This could be possibly due to larger amount of training data used to train the PLDA backend, but more likely is due to indeterminism.
+		
 		\subsection{Kaldi VoxCeleb i-vector model}
+			This model was also downloaded from the same Kaldi models webpage as the previous recipe, and closely follows the recipe in \cite{snyder2018x}. The recipe used for training is available in Kaldi at \ttvar{egs/voxceleb/v1}. Similar to the x-vector recipe, the model is also trained on a combination of VoxCeleb I and II, but without augmentation. The UBM is trained on 2048 gaussians using all the training utterances. The i-vector extractor is trained using the longest 100k utterances and produces 400-dimensional i-vectors. I-vectors are extracted for all the training utterances, reduced to 200 dimensions using LDA, and then used to train a PLDA backend.
+			
+			\begin{table}[h]
+				\centering
+				\begin{tabular}{|c|c|c|c|}
+					\hline
+					Dataset & DER (\%) & Speaker error (\%) & JER (\%) \\
+					\hline
+					dev & 26.18 & 17.83 & 59.81 \\
+					\hline
+					eval & 32.03 & 22.51 & 65.22 \\
+					\hline
+				\end{tabular}
+				\caption{Scores with Kaldi VoxCeleb i-vector model.}
+			\end{table}
+									
+	\section{Training Models on dev set only}
 	
-	\section{Training Models on In-Domain Data}
-		\subsection{No Augmentation}
-		\subsection{Augmentation with Noise and Reverberation}
-		
-	\section{Manual Speech Activity Detection}
-		\subsection{WebRTC}
-		\subsection{SHoUT toolkit}
-		\subsection{Energy-based}
-		\subsection{DNN-based}
-		
-	\section{Speech Enhancement}
-		\subsection{Baseline}
-	
-	\section{Alternative Distance Metrics for Clustering}
-		\subsection{BIC}
-		\subsection{Cosine}
+	\section{Training Models on combination of Voxceleb and dev set}
 		
 	\section{Feature concatenation}
-		\subsection{Concatenating i-vectors and x-vectors}
 	
 	\section{Tuning Hyperparameters}
 		\subsection{Vector Dimensionality}
 		\subsection{Segment Length and Overlap}
 		\subsection{Clustering Threshold}
 		\subsection{Number of UBM Gaussians}
-	
-	\section{Cluster Purity Scores}
 	
 	\section{Breaking down DER}
 		\subsection{By amount of speaker data}

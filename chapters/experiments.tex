@@ -1,11 +1,9 @@
 \chapter{Experiments and Results}
 
 	\section{Baseline results}
-	The baseline results discussed here have been computed by running the 2019 baseline on the datasets from the previous year's DIHARD challenge (2018). This is because it was not possible to register for DIHARD 2019 before the deadline, and thus access to 2019 datasets was denied.
+	The baseline results shown in Table \ref{table-baseline-scores} have been computed by running the 2019 baseline on the datasets from the previous year's DIHARD challenge (2018). This is because it was not possible to register for DIHARD 2019 before the deadline, and thus access to 2019 datasets was denied.
 	
 	Luckily the 2018 datasets were released as a part of the June LDC newsletter. Since the basic problem statement of the challenge remains the same as last year, the last year's datasets can still be used without any trouble. But this unfortunately means that it is no longer possible to verify the computed baseline scores with official scores, because the official scores only exist for the 2019 datasets. The only useful hint was found on the webpage at \cite{dihard2-unofficial}, which mentions a rough score of 20.71 on the 2018 development set.
-	
-	It is also important to mention that Missed Speech and False Alarm are not mentioned in any of the following experiments, because they are always constant. Missed speech is always 8.34\% for the dev set and 9.52\% for the eval set. False alarm is always zero for both. They are constant because we are working with reference SAD, so the segments that we consider speech or non-speech are fixed. Missed speech is non-zero because of error in the DIHARD reference files. The reference speech segmentation came in the form of HTK label files, and it did not match up with the reference RTTM (label files had 8.34\% and 9.52\% less speech respectively).
 	
 	\begin{table}[h]
 		\centering
@@ -19,10 +17,12 @@
 			\hline
 		\end{tabular}
 	\caption{Baseline scores.}
+	\label{table-baseline-scores}
 	\end{table}
 	
 	The results already seem pretty good, considering that the system is not very complex. The best JHU system in DIHARD 2018 had an eval DER of 23.73\%, and that included doing Variational Bayes refinement as an extra step.
 
+	It is also important to mention that Missed Speech and False Alarm are not mentioned in any of the following experiments, because they are always constant (since we work with reference SAD only). Missed speech is always 8.34\% for the dev set and 9.52\% for the eval set. False alarm is always zero for both, as expected. Missed speech should also be zero from the same reason, but it is not because the reference segmentation, which is in the form of HTK label files, have been created by merging overlapping segments. This causes the amount of speech in the label files to be 8.34\% and 9.52\% less than the RTTM files.
 		
 	\section{Using Existing Pre-trained Models}
 	The first set of experiments was to see how certain pre-trained models freely available on the Internet perform.
@@ -66,10 +66,108 @@
 				\end{tabular}
 				\caption{Scores with Kaldi VoxCeleb i-vector model.}
 			\end{table}
-									
-	\section{Training Models on dev set only}
+		
+		Clearly, this is much worse than the x-vector model trained on the same VoxCeleb data without augmentation. Augmentation is not used because \cite{snyder2018x} talks about i-vectors not being able to use additional data effectively, unlike x-vectors.
 	
-	\section{Training Models on combination of Voxceleb and dev set}
+	\section{Training Custom Models}
+	Training our own models was considered because that would allow models to be trained on in-domain data (the DIHARD development set). The amount of data available in the dev set is relatively small, only 19 hours, so we do not expect great results. The recipes in \ttvar{egs/voxceleb} were used as a starting point for both i-vector extractor and x-vector extractor training.
+	
+		\subsection{Training with DIHARD development set}
+			The following results in Table \ref{table-dev-xvec} were obtained by training an x-vector model on the DIHARD development set. The reference RTTM files for the dev set were used to generate 28241 training utterances from 221 speakers. The recipe imposes a minimum feature length of 400 frames and a minimum 8 utterances per speaker, so after filtering only 2726 utterances from 90 speakers were used to train with. This meant that the neural network had 90 output nodes. The embedding layer had 512 dimension. The PLDA backend was trained from x-vectors extracted from the whole dev set and reduced to 200 dimensions using LDA.
+			\begin{table}[h]
+				\centering
+				\begin{tabular}{|c|c|c|c|}
+					\hline
+					Dataset & DER (\%) & Speaker error (\%) & JER (\%) \\
+					\hline
+					dev & 41.35 & 33.00 & 74.60 \\
+					\hline
+					eval & 43.16 & 33.64 & 75.96 \\
+					\hline
+				\end{tabular}
+				\caption{Scores with x-vector model trained on DIHARD dev.}
+				\label{table-dev-xvec}
+			\end{table}
+		
+		These seem to be pretty bad, but they align with the known fact that x-vectors perform poorly on small amounts of data. As an additional experiment, augmentation was applied to the dev set. The augmentation was done similar to what the baseline does: 4 variants of the training set were created (reverb, noise, babble, music) and added to the original set, multiplying the number of utterances by 5. This resulted in 141205 utterances from 221 speakers, reduced to 13630 utterances from 90 speakers after filtering. This increased amount of training data resulted in a small increase in performance, as given in Table \ref{table-dev-xvec-aug}.
+		
+		\begin{table}[h]
+			\centering
+			\begin{tabular}{|c|c|c|c|}
+				\hline
+				Dataset & DER (\%) & Speaker error (\%) & JER (\%) \\
+				\hline
+				dev & 35.54 & 27.20 & 76.56 \\
+				\hline
+				eval & 39.43 & 29.91 & 78.65 \\
+				\hline
+			\end{tabular}
+			\caption{Scores with x-vector model trained on DIHARD dev + augmentation.}
+			\label{table-dev-xvec-aug}
+		\end{table}
+	
+		The result of training x-vector extractor on in-domain data did not increase the perfomance beyond the baseline, despite adding augmentation. 
+		
+		Next, an i-vector model was trained on the dev set. Surprisingly, it performed much better, as given in the Table \ref{table-dev-ivec}.
+		
+		\begin{table}[h]
+			\centering
+			\begin{tabular}{|c|c|c|c|}
+				\hline
+				Dataset & DER (\%) & Speaker error (\%) & JER (\%) \\
+				\hline
+				dev & 25.22 & xx.xx & 58.58 \\
+				\hline
+				eval & 34.61 & xx.xx & 65.69 \\
+				\hline
+			\end{tabular}
+			\caption{Scores with i-vector model trained on DIHARD dev.}
+			\label{table-dev-ivec}
+		\end{table}
+		
+		This shows that the i-vector model without augmentation performed better than the x-vector model with augmentation, given the amount of data is small.
+			
+		The i-vector training on the the non-augmented dev set took 17 hours on a 32-core machine, with near 100\% CPU usage all the time. The i-vector training was not attempted with an augmented dev set, which would be 5 times bigger.
+						
+		\subsection{Training with combination of Voxceleb and DIHARD development set}
+			For the next set of experiments the amount of training data was increased by adding data from VoxCeleb I. VoxCeleb II was not used because it is 7 times bigger than VoxCeleb I, making the training set too big, especially for i-vector training. There are 153,516 utterances from 1,251 speakers in VoxCeleb I, so this increases the total amount of training data significantly. All the parameters of the training remained similar.
+			
+			The results of the x-vector model trained on the combination of VoxCeleb I and DIHARD dev set are given in Table \ref{table-voxdev-xvec}.
+			
+			\begin{table}[h]
+				\centering
+				\begin{tabular}{|c|c|c|c|}
+					\hline
+					Dataset & DER (\%) & Speaker error (\%) & JER (\%) \\
+					\hline
+					dev & 23.45 & 15.11 & 56.89 \\
+					\hline
+					eval & 29.44 & 19.92 & 61.37 \\
+					\hline
+				\end{tabular}
+				\caption{Scores with x-vector model trained on combination of VoxCeleb I and DIHARD dev.}
+				\label{table-voxdev-xvec}
+			\end{table}
+		
+		The results of the i-vector model trained on the combination of VoxCeleb I and DIHARD dev set are given in Table \ref{table-voxdev-ivec}.
+		
+		\begin{table}[h]
+			\centering
+			\begin{tabular}{|c|c|c|c|}
+				\hline
+				Dataset & DER (\%) & Speaker error (\%) & JER (\%) \\
+				\hline
+				dev & 25.15 & 16.81 & 56.78 \\
+				\hline
+				eval & 31.61 & 22.08 & 60.74 \\
+				\hline
+			\end{tabular}
+			\caption{Scores with i-vector model trained on combination of VoxCeleb I and DIHARD dev.}
+			\label{table-voxdev-ivec}
+		\end{table}
+		
+		\subsection{Lessons Learnt From Training}
+		Unlike i-vector training which is unsupervised, x-vector training needs speaker labels since the neural network is trained to discriminate between the speakers \cite{stafylakis2019self}.
 		
 	\section{Feature concatenation}
 	
@@ -79,7 +177,7 @@
 		\subsection{Clustering Threshold}
 		\subsection{Number of UBM Gaussians}
 	
-	\section{Breaking down DER}
+	\section{Discussion of results}
 		\subsection{By amount of speaker data}
 		\subsection{By recording}
 		\subsection{By utterance duration}

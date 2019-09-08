@@ -1,21 +1,60 @@
-\chapter{Literature Review on Speaker Diarization}
+\chapter{Stages of Speaker Diarization}
+This chapter discusses the general steps of a speaker diarization system and some of the recent techniques that are commonly used these days. In all diarization systems, the basic approach is to first extract the segments containing speech from the audio, further divide the segments into subsegments consisting of only one speaker, represent each subsegment using an embedding, and cluster the subsegments together so that each cluster represents unique speaker.
 
-\section{Introduction}
+\section{Speech Enhancement}
+Any speech system needs to address the problem of environmental noise in audio recordings. It is important to remove as much noise as possible, but also speaker information loss should be kept to a minimum. If done right, this stage results in increased performance in subsequent stages. If not, artefacts in denoised speech reduce diarization performance. In recent years, deep learning methods have partially solved the problem of artefacts, but generalization ability in varied domains is still a problem. This stage is not mandatory, but can be helpful in certain conditions.
 
 \section{Feature Extraction}
+The first important step in any speech system is to represent the speech recording using a sequence of feature vectors. This representation is much more compact as it only uses a few thousand parameters for every second of audio, compared to 44,100 samples in a raw waveform sampled at 44.1 KHz. The most commonly used features are Mel Frequency Cepstral Coefficients (MFCCs). Speech production can be thought of as filtering of the sound produced by the vocal cords by the shape of the human vocal tract. The shape is influenced by the positions of the tongue, teeth, lips, velum etc and determines what sound comes out. Since the shape of the vocal tract is manifested in the envelope of the short time power spectrum of the speech signal, the job of the MFCCs can be thought of as to represent this envelope accurately.
+
+As a first step, overlapping frames are extracted from the digitized signal using a sliding window. FFT is applied on each frame to get the short time power spectrum of the frame.
 				
 \section{Speech Activity Detection}
-	
+Speech activity detection (SAD) extracts the segments in the audio that contain speech, and discards the rest. This is important because speaker diarization is only concerned with assigning speaker identities to speech segments, and does not do anything with non-speech segments. It is also possible to consider all the non-speech segments to be coming from a hypothetical new speaker which has its own cluster after clustering, but that does not result in good performance as the amount of variability possible in non-speech sounds is too high. Therefore, doing a separate SAD step before diarization is the standard method.
+
+There are two goals of a good SAD system - keep missed speech to a minimum, and keep false alarm speech to a minimum. The first causes under-clustering and might cause speech segments being ignored or detect too few speakers, while the second pollutes clusters and degrades the diarization output. If the diarization system is used as a frontend for ASR, these errors cause word deletion and word insertion errors respectively.
+
+Since this is a binary classification problem, it can be solved by using simple thresholding on the frame energy level. The MFCC features have the log energy of the frame as the first coefficient which can be used for this. The Kaldi program \ttvar{compute-vad} uses energy thresholding to do SAD.
+
+Statistical model-based approaches are much more popular and are trained with lots of diverse external data. Typically Long Short Term Memory networks (LSTMs) or Time Delay Neural Networks (TDNNs) are used for this task.
+
 \section{Segmentation}
-		
+
+The goal of the segmentation task is to further divide the speech segments found after the SAD step into smaller segments such that there are no speaker turns within any of these subsegments. Speaker turns are defined to be the points in the audio where the set of talking speakers changes. For example within a speech segment, the point where spkr1 changes into spkr2 (spkr1 finished talking and spkr2 started immediately) would be a speaker turn because the set of talking speakers changes from <spkr1> to <spkr2>. Similarly, if spkr2 starts talking without waiting for spkr1 to end (causing an overlap) the set changes from <spkr1> to <spkr1,spkr2>, which is also a speaker turn.
+
+There are basically two ways to do segmentation. The first way is to try and automatically detect speaker turns and divide the segments at these points. The classical aproach for doing this uses a sliding window, and compares consecutive windows.	The comparision decides whether the two windows are better accounted by two separate models (different speaker sets) or single model (same speaker set) using an emperically determined threshold. Many distance metrics exist for this decision, for example the $\delta$ Bayesian Information Criterion (BIC) metric.
+
+The second way is to divide the segments uniformly into very small subsegments (1-2 seconds) so that it is unlikely that the set of speakers changes within that segment.
+
+It is not clear which of these ways yields better results. Uniform segmentation approaches are reported to work better for x-vectors \cite{patino2018odessa}.
+
 \section{Clustering}
+	As the most important step of the diarization process, clustering works on the whole audio recording and groups together segments that belong to the same speaker. In the ideal case, all the segments belong to a speaker exist in the same cluster, and the number of clusters is equal to the actual number of speakers. The clustering process needs a distance-like similarity measure to exist between pairs of segments. Each segment can be represented by a point in vector space or a statistical model. This representation acts as the speaker representation for the segment, where the similarity between any two representations is lower if the segments have speech from the same set of speakers.
+	
+	Since the speaker verification and speaker recognition fields also use speaker models to capture speaker information, these models are adopted for clustering for diarization. The best performing models are outlined below.
+	
 	\subsection{Speaker Representation}
-		\subsubsection{GMM}
+		\subsubsection{Gaussian Mixture Models}
+		Gaussian Mixture Models (GMMs) are generative models that can be used for modeling multivariate data. In GMMs, the probability of a data point is given by the weighted combination of the probabilities from multivariate Gaussian distributions having their own mean and covariance matrices.
+		The goal is to train a GMM to represent each segment. For this, the feature vectors belonging to a segment can simply be pooled together and the GMM parameters can be learned using the Expectation-Maximization (EM) algorithm. But this is a problem because the number of feature vectors available from the segment would likely be insufficient to obtain a good estimate of the GMM parameters. This is because the number of GMMs is usually in the order of 512, 1024 or even 2048. To overcome this problem, a Universal Background Model (UBM) is trained using a large amount speech from the general population. This UBM is later adapted to each target segment using a Maximum Apriori (MAP) adaptation, resulting in an adapted GMM for each segment.
+		Now that we have a GMM to represent each segment, we can use different statistical similarity measures that can act as a distance metric that can be used for clustering. The Kullback-Leibler (KL) divergence is a measure that estimates the distance between two random distributions. The cross likelihood ratio is given by the following.
+		
+		$$ CLR(S1, S2) = \log\frac{P(S1|M1)}{P(S1|M2)} + \log\frac{P(S2|M1)}{P(S2|M2)} $$
+		
+		Where $S_1$ and $S_2$ are the segments that are being compared, and $M_1$ and $M_2$ are their corresponding GMMs. It can be seen that if the segments come from the same speaker, the denominators increase, and the distance decreases.
+		
+		Later experiments found that only the means in the adapted GMMs carry most of the useful speaker information, the mixture weights and covariance matrices have too much variability to be of any use. Hence the means of GMMs were concatenated into a single vector called a GMM supervector and simpler distance measures like cosine distance and Mahalanobis distance were used as distance metrics for clustering.
 
 		\subsubsection{i-vectors}
-
-		\subsubsection{x-vectors}
+		I-vectors were introduced as a reduced dimension representation of the GMM supervector using factor analysis.
 		
+		$$ m_s = m_u + Tw_s $$
+		
+		$m_s$ and $m_u$ are the adapted supervector for a segment $S$ and the UBM supervector, respectively. $w_s$ is the i-vector of the segment $s$. $T$ is the ``total variability matrix" which projects the supervector down to the i-vector representation. $T$ is estimated from the training data using the EM algorithm.
+		
+		\subsubsection{x-vectors}
+		X-vectors were introduced in \cite{snyder2018x}, where a DNN is trained to discriminate between speakers and map variable-length utterances to fixed dimensional embeddings called x-vectors. Unlike the i-vector training, where the projection matrix $T$ is learned in an unsupervised way, DNNs require speaker labels to train.
+				
 	\subsection{Agglomerative Clustering}
 
 	\subsection{Distance metrics}

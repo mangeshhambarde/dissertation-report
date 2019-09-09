@@ -8,7 +8,7 @@ Any speech system needs to address the problem of environmental noise in audio r
 The first important step in any speech system is to represent the speech recording using a sequence of feature vectors. This representation is much more compact as it only uses a few thousand parameters for every second of audio, compared to 44,100 samples in a raw waveform sampled at 44.1 KHz. The most commonly used features are Mel Frequency Cepstral Coefficients (MFCCs). Speech production can be thought of as filtering of the sound produced by the vocal cords by the shape of the human vocal tract. The shape is influenced by the positions of the tongue, teeth, lips, velum etc and determines what sound comes out. Since the shape of the vocal tract is manifested in the envelope of the short time power spectrum of the speech signal, the job of the MFCCs can be thought of as to represent this envelope accurately.
 
 As a first step, overlapping frames are extracted from the digitized signal using a sliding window. FFT is applied on each frame to get the short time power spectrum of the frame.
-				
+
 \section{Speech Activity Detection}
 Speech activity detection (SAD) extracts the segments in the audio that contain speech, and discards the rest. This is important because speaker diarization is only concerned with assigning speaker identities to speech segments, and does not do anything with non-speech segments. It is also possible to consider all the non-speech segments to be coming from a hypothetical new speaker which has its own cluster after clustering, but that does not result in good performance as the amount of variability possible in non-speech sounds is too high. Therefore, doing a separate SAD step before diarization is the standard method.
 
@@ -58,13 +58,22 @@ It is not clear which of these ways yields better results. Uniform segmentation 
 	\subsection{Agglomerative Clustering}
 
 	\subsection{Distance metrics}
-		
-		\subsubsection{BIC}
 		\subsubsection{PLDA}
 
 \section{Evaluation}
 
 	\subsubsection{Diarization Error Rate}
-	\subsubsection{Jaccard Error Rate}
+		This metric is most popular for evaluating diarization. It was introduced for the NIST Rich Transcription Spring 2003 Evaluation (RT-03S). Basically, it is the total percentage of reference speaker time that is not correctly attributed to a speaker. ``Correctly attributed" relates to the optimal mapping between reference and system speakers. The DER formula is given below.
+		
+		$$ DER = \frac{FA + MISS + ERROR}{TOTAL} $$
+		
+		$TOTAL$ is the sum of durations of all reference speaker segments.
+		$FA$ is the system speaker time that is not attributed to a reference speaker. This is when the system misinterprests a non-speech segment as speech.
+		$MISS$ is the reference speaker time that is not accounted for by a system speaker. This is when the system misses a speech segment and classifies it as non-speech.
+		$ERROR$ is the total system speaker time that is attributed to the wrong speaker. This is when the system incorrectly guesses the identity of a speaker from a voiced segment.
+		
+		It is easy to see that the best possible DER is 0\%. Also if FA is always zero, 100\% is the upper limit for DER. Because of its definition, speakers with longer segments tend to contribute more to DER than speakers with shorter segments.
+		
+		The NIST evaluations have a practice in which a forgiveness collar is applied to either sides of reference segments, to get rid of errors from inconsistent human annotations and uncertainty about when a speaker begins or ends. These collars are not scored. This does not apply for DIHARD and there are no forgiveness collars used. Overlapping speech is also evaluated - so the ideal system is expected to output overlapping segments if two speakers overlap in the source audio. A system that generates only flat segmentations (no overlap) will have higher DER because the overlapping segments could give rise to missed speech and speaker errors.
 
 \section{Kaldi toolkit}

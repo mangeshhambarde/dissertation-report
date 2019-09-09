@@ -77,3 +77,41 @@ It is not clear which of these ways yields better results. Uniform segmentation 
 		The NIST evaluations have a practice in which a forgiveness collar is applied to either sides of reference segments, to get rid of errors from inconsistent human annotations and uncertainty about when a speaker begins or ends. These collars are not scored. This does not apply for DIHARD and there are no forgiveness collars used. Overlapping speech is also evaluated - so the ideal system is expected to output overlapping segments if two speakers overlap in the source audio. A system that generates only flat segmentations (no overlap) will have higher DER because the overlapping segments could give rise to missed speech and speaker errors.
 
 \section{Kaldi toolkit}
+	\subsection{Introduction}
+	The Kaldi speech recognition toolkit was started in 2009 at JHU with an aim to create a modern, well-engineered general purpose speech toolkit with a permissive license. Other aims of the project were to have a finite-state transducer (FST) based framework and have extensive linear algebra support. The toolkit depends on some external libraries that are freely avaialble - OpenFST, BLAS and LAPACK. The toolkit includes programs written in C++ that wrap these libraries, which are in turn called from bash/python scripts that can be collectively used to create complete recipes that do a specific job like speech/speaker recognition, diarization etc.
+	
+	
+	Kaldi includes ready-to-use complete recipes for popular and widely available datasets such as those provided by the Linguistic Data Consortium (LDC). They are available as subdirectories of the \ttvar{egs} directory in Kaldi's root directory.
+	
+	\begin{verbatim}
+	(base) [acq18mh@snarl ~/workspace]$ ls kaldi/egs
+	README.txt            casia_hwdb               fisher_swbd
+	aidatatang_200zh      chime1                   formosa
+	aishell               chime2                   gale_arabic
+	aishell2              chime3                   gale_mandarin
+	ami                   chime4                   gp
+	an4                   chime5                   heroico
+	apiai_decode          cifar                    hkust
+	aspire                commonvoice              hub4_english
+	aurora4               csj                      hub4_spanish
+	babel                 dihard2-voxceleb         iam
+	babel_multilang       dihard_2018              iban
+	bentham               fame                     ifnenit
+	bn_music_speech       farsdat                  librispeech
+	callhome_diarization  fisher_callhome_spanish  lre
+	callhome_egyptian     fisher_english           lre07
+	\end{verbatim}
+	
+	The C++ executables are have specific functionality so can be chained together in a typical Unix fashion to create complex pipelines. Given below is the simplified view of the Kaldi components.
+	
+	\subsection{Briew Overview of a Kaldi Recipe}
+	This section describes how a typical Kaldi recipe works. The DIHARD challenge's baseline Kaldi recipe is used as reference.
+	
+	% utt2spk, spk2utt
+	% wav.scp
+	% feats.scp
+	% segments
+	% data, exp
+	% vad.scp
+	% run.sh
+	

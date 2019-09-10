@@ -80,7 +80,6 @@ It is not clear which of these ways yields better results. Uniform segmentation 
 	\subsection{Introduction}
 	The Kaldi speech recognition toolkit was started in 2009 at JHU with an aim to create a modern, well-engineered general purpose speech toolkit with a permissive license. Other aims of the project were to have a finite-state transducer (FST) based framework and have extensive linear algebra support. The toolkit depends on some external libraries that are freely avaialble - OpenFST, BLAS and LAPACK. The toolkit includes programs written in C++ that wrap these libraries, which are in turn called from bash/python scripts that can be collectively used to create complete recipes that do a specific job like speech/speaker recognition, diarization etc.
 	
-	
 	Kaldi includes ready-to-use complete recipes for popular and widely available datasets such as those provided by the Linguistic Data Consortium (LDC). They are available as subdirectories of the \ttvar{egs} directory in Kaldi's root directory.
 	
 	\begin{verbatim}
@@ -102,16 +101,45 @@ It is not clear which of these ways yields better results. Uniform segmentation 
 	callhome_egyptian     fisher_english           lre07
 	\end{verbatim}
 	
-	The C++ executables are have specific functionality so can be chained together in a typical Unix fashion to create complex pipelines. Given below is the simplified view of the Kaldi components.
+	The C++ executables are have specific functionality so can be chained together in a typical Unix fashion to create complex pipelines. Given below is the simplified view of the Kaldi architecture.
 	
 	\subsection{Briew Overview of a Kaldi Recipe}
-	This section describes how a typical Kaldi recipe works. The DIHARD challenge's baseline Kaldi recipe is used as reference.
+	This section describes some important parts of a typical Kaldi recipe. JHU's recipe for the DIHARD 2018 challenge \ttvar{egs/dihard_2018} is used as reference. It looks like the following.
 	
-	% utt2spk, spk2utt
-	% wav.scp
-	% feats.scp
-	% segments
-	% data, exp
-	% vad.scp
-	% run.sh
+	\begin{verbatim}
+(base) [acq18mh@snarl kaldi]$ ls -l egs/dihard_2018
+-rw-r--r--. acq18mh mini Jun 24 21:43 README.txt
+-rwxr-xr-x. acq18mh mini Aug 26 03:26 cmd.sh
+drwxr-sr-x. acq18mh mini Aug 19 01:04 conf
+drwxr-sr-x. acq18mh mini Sep  7 19:21 data
+lrwxrwxrwx. acq18mh mini Jun 24 21:43 diarization ->
+ ../../callhome_diarization/v1/diarization
+drwxr-sr-x. acq18mh mini Sep  7 19:20 exp
+drwxr-sr-x. acq18mh mini Aug 30 01:16 local
+drwxr-sr-x. acq18mh mini Sep  7 19:20 mfcc
+-rwxr-xr-x. acq18mh mini Jun 24 21:43 path.sh
+-rwxr-xr-x. acq18mh mini Aug 26 03:26 run.sh
+lrwxrwxrwx. acq18mh mini Jun 24 21:43 sid -> ../../sre08/v1/sid
+lrwxrwxrwx. acq18mh mini Jun 24 21:43 steps -> ../../wsj/s5/steps
+lrwxrwxrwx. acq18mh mini Jun 24 21:43 utils -> ../../wsj/s5/utils
+	\end{verbatim}
+	
+	Most Kaldi recipes have a toplevel script called ``run.sh" in the recipe directory. This is the starting point of the recipe. There are several scripts that are reused across many recipes. In many cases this is achieved by creating symlinks to other recipes, as seen by the arrows in the above listing. This recipe reuses scripts from the \ttvar{callhome_diarization}, \ttvar{wsj} and \ttvar{sre08} recipes. Scripts that are specific to this recipe are placed in \ttvar{local}, configuration files are placed in \ttvar{conf} and \ttvar{exp} contains files needed or created during the experiment. The \ttvar{data} directory is important because it holds a lot of information about the data that the experiment works on.
+	
+	\begin{verbatim}
+	(base) [acq18mh@snarl dihard_2018]$ ls -l data
+	-rw-r--r--.  1 acq18mh mini 3909183 Aug 28 03:32 feats.scp
+	-rw-r--r--.  1 acq18mh mini    1642 Aug 28 03:31 reco2num_spk
+	-rw-r--r--.  1 acq18mh mini 1768875 Aug 28 03:31 rttm
+	-rw-r--r--.  1 acq18mh mini  808834 Aug 28 03:32 segments
+	-rw-r--r--.  1 acq18mh mini  289353 Aug 28 03:32 spk2utt
+	drwxr-sr-x. 42 acq18mh mini    4096 Aug 28 03:32 split40
+	-rw-r--r--.  1 acq18mh mini  423522 Aug 28 03:32 utt2dur
+	-rw-r--r--.  1 acq18mh mini  392200 Aug 28 03:32 utt2num_frames
+	-rw-r--r--.  1 acq18mh mini  465297 Aug 28 03:32 utt2spk
+	-rw-r--r--.  1 acq18mh mini   27388 Aug 28 03:32 wav.scp
+	-rw-r--r--.  1 acq18mh mini   27388 Aug 28 03:32 vad.scp
+	\end{verbatim}
+	
+	There are 3 files that must be created manually here: wav.scp, utt2spk, segments. The wav.scp file holds information about the actual audio files and how to extract data from them in a usable form. The utt2spk file contains identifiers for all utterances mapped to the identity of the speaker who speaks them. The spk2utt file is the opposite and is created automatically. The segments file holds information about how to extract the utterances from the audio files. The feats.scp file is created after feature extraction and tells where to find the features. The vad.scp file is created after voice activity detection (or SAD) and contains a binary decision about each frame being speech or non-speech.
 	

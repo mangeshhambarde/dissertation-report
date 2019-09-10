@@ -55,10 +55,17 @@ It is not clear which of these ways yields better results. Uniform segmentation 
 		\subsubsection{x-vectors}
 		X-vectors were introduced in \cite{snyder2018x}, where a DNN is trained to discriminate between speakers and map variable-length utterances to fixed dimensional embeddings called x-vectors. Unlike the i-vector training, where the projection matrix $T$ is learned in an unsupervised way, DNNs require speaker labels to train.
 				
-	\subsection{Agglomerative Clustering}
+	\subsection{Agglomerative Hierarchical Clustering}
+		Agglomerative Hierarchical Clustering (HAC) is the most commonly used clustering algorithm for diarization. It utilizes a bottom up approach in which the clustering is initialized with many more clusters than the actual number of speakers. It aims at reducing the number of clusters by 1 in each iteration by merging two of the most similar clusters. Many initializations are possible, some use k-means and many use uniform initialization.
 
 	\subsection{Distance metrics}
 		\subsubsection{PLDA}
+		Probabilistic Linear Discriminant Analysis (PLDA) is the state-of-the-art scoring technique for diarization. It is used to generate a similarity scores between each pair of segments in a recording which are stored in an affinity matrix. This matrix is fed to the clustering as input.
+		
+		PLDA is a probabilistic extension of Linear Discriminant Analysis (LDA). LDA is similiar to Principal Component Analysis (PCA) where eigenvalues and eigenvectors of the covariance matrix are used to project data onto a lower dimension that maximizes the variance within the data. Unlike PCA, whose goal is data representation, the goal of LDA is class separability. Thus LDA is class-aware unlike PCA. Just like LDA, PLDA projects the data onto a lower dimension while minimizing discriminitative ability by maximizing the ratio of between-class and within-class variance.
+		
+		%http://www.odyssey2016.org/papers/pdfs_stamped/12.pdf
+		%https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7078610&tag=1 ---------------> diagram idea also.
 
 \section{Evaluation}
 

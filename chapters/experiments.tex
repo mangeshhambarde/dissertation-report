@@ -111,7 +111,7 @@
 		
 		These seem to be pretty bad, but they align with the known fact that x-vectors perform poorly on small amounts of data, as mentioned in the conclusion of \cite{huang2018jhu}.
 		
-		As an additional experiment, augmentation was applied to the dev set. The augmentation was done similar to what the baseline does: 4 variants of the training set were created (reverb, noise, babble, music) and added to the original set, multiplying the number of utterances by 5. This resulted in 141,205 utterances from 221 speakers, reduced to 13,630 utterances from 90 speakers after filtering. This increased amount of training data resulted in a small increase in performance, as given in Table \ref{table-dev-xvec-aug}. But it still did not increase the perfomance beyond the baseline.
+		As an additional experiment, augmentation was applied to the dev set. The augmentation was done similar to what the baseline does: 4 variants of the training set were created (reverb, noise, babble, music) and added to the original set, multiplying the number of utterances by 5. This resulted in 141,205 utterances from 221 speakers, reduced to 13,630 utterances from 90 speakers after filtering. This increased amount of training data resulted in a small increase in performance, as given in Table \ref{table-dev-xvec-aug}. But it still did not increase the performance beyond the baseline.
 		
 		\begin{table}[h]
 			\centering
@@ -220,21 +220,21 @@
 	\section{Hyperparameters}
 		This sections describes the hyperparameters that were used to run the above experiments. Due to lack of time, it was not possible to experiment with tuning any of these and the defaults existing in the baseline or the reference training recipes were used.\\
 		\subsection{MFCC feature vector length}
-			The x-vector systems used 30 dimensional MFCCs because Kaldi's pretrained x-vector extractor DNN had 30 inputs. For consistency, the MFCC dimensionality for the the self trained x-vector extractor DNN was also set to 30.
+			The x-vector systems used 30 dimensional MFCCs because Kaldi's pre-trained x-vector extractor DNN had 30 inputs. For consistency, the MFCC dimensionality for the the self trained x-vector extractor DNN was also set to 30.
 			Similarly, the i-vector systems used 72 dimensional features (24 dimensional MFCCs with delta and delta-delta coefficients added) because Kaldi's pre-trained UBM and i-vector extractor was trained with 72 dimensional Gaussians. The self trained i-vector extractor also used the same.
 		\subsection{Speaker Embedding Length}
 			This is an obvious one because it has a significant effect on the amount of speaker information that is present in each embedding. The Kaldi pre-trained models extracted 400 dimensional i-vectors, and the self-trained i-vector extractor was configured to do the same. Similarly in the x-vector case the length was always 512.
 		\subsection{Segment Length and Overlap}
 		The baseline diarization system used uniform segmentation with segment length 1.5 sec and 0.75 sec overlap (50\%). This was not changed in any of the diarization runs.
 		\subsection{Clustering Threshold}
-		The threshold during the clustering step in diarization is in terms of the log likelihood ratio provided by PLDA scores. In a perfectly caliberated system, the score is 0. The best threshold was selected from the list -0.5, -0.4, -0.3, -0.2, -0.1, -0.05, 0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5 using the computed DER on the dev set.
+		The threshold during the clustering step in diarization is in terms of the log likelihood ratio provided by PLDA scores. In a perfectly calibrated system, the score is 0. The best threshold was selected from the list -0.5, -0.4, -0.3, -0.2, -0.1, -0.05, 0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5 using the computed DER on the dev set.
 		\subsection{Number of UBM Gaussians}
 		The number of Gaussians in the pre-trained and self-trained trained UBMs was always 2048.
 		\subsection{PLDA dimension}
 		The dimensionality of the PLDA backend was always 200, except in the c-vectors experiment where it varied from 200 to 800, and the baseline where it was 512.
 
 	\section{Discussion of results}
-		Three main experiements were carried out. The first included running the baseline with pre-trained i-vector and x-vector models available on the Kaldi website that have been trained on a large amount of data from the VoxCeleb dataset. The VoxCeleb dataset consists of audio taken from YouTube videos recorded in a variety of conditions, so there is significant channel, environment, and speaker variance. Other baseline parameters like segment length, overlap, clustering threshold, PLDA dimension were left unchanged. The x-vector model resulted in a similar performance as the baseline (26.42\%), and the i-vector model performed much worse with 32.03\%. This is expected as x-vectors have been found to out-perform i-vectors \cite{snyder2018x}, especially with data augmentation.
+		Three main experiments were carried out. The first included running the baseline with pre-trained i-vector and x-vector models available on the Kaldi website that have been trained on a large amount of data from the VoxCeleb dataset. The VoxCeleb dataset consists of audio taken from YouTube videos recorded in a variety of conditions, so there is significant channel, environment, and speaker variance. Other baseline parameters like segment length, overlap, clustering threshold, PLDA dimension were left unchanged. The x-vector model resulted in a similar performance as the baseline (26.42\%), and the i-vector model performed much worse with 32.03\%. This is expected as x-vectors have been found to out-perform i-vectors \cite{snyder2018x}, especially with data augmentation.
 		
 		The second experiment involved training own models for i-vector and x-vector extraction. The motivation for this was to take advantage of the in-domain data (the DIHARD dev set) to have better suited models for the DIHARD eval set, the composition of which is similar to the dev set. There were two parts to this - in the first part, these models were trained on only the DIHARD dev set. This was predicted to not have performance as the dev set has only 19 hours of audio from about 200 speakers, which is really small especially for the x-vector model. As predicted, the x-vector model's performance was terrible at 43.16\% (without augmentation) and 39.43\% (with augmentation). The i-vector model's performance was much better at 34.61\% suggesting that i-vectors perform better with small amounts of data. In the second part, the models were trained on a combination of VoxCeleb I and the DIHARD dev set. The goal was to increase the amount of training data using an external source, yet retaining some in-domain data. Both the x-vector and i-vector models were trained using this combination (without augmentation) and the results showed a good improvement with 29.44\% and 31.61\% respectively.
 		
@@ -248,4 +248,3 @@
 		%About recording wise DER, comment on domains that did better
 		%About the predicted number of speakers
 		
-	\section{Further Work}

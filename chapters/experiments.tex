@@ -1,13 +1,13 @@
 \chapter{Experiments and Results}
 	\section{Modifications to the baseline scripts}
-	The baseline scripts were modified to make it easier to running various experiments. Arguments were added to specify the type of speaker embedding to be used, the trained model files to be used, the PCA dimension to be used for etc. Some new scripts were also added. Most of the modifications are present in the files \ttvar{recipes/track1/run.sh} and \ttvar{scripts/alltracksrun.sh} from the DIHARD baseline repository.
+	The diarization baseline scripts were modified to make it easier to run various experiments. Arguments were added to specify the type of speaker embedding to be used (i-vector or x-vector), the specific trained model to be used, the specific PLDA backend to be used, and the PCA dimension to be used. It was made possible to run multiple experiments of the same recipe in parallel without overwriting each others' files. Some new scripts were written and a new C++ executable was added. The dscore library was modified to output a breakdown of the DER metric (MISS, FA, ERROR) instead of just the DER. Most of the modifications are present in the files \ttvar{recipes/track1/run.sh} and \ttvar{scripts/alltracksrun.sh} from the DIHARD baseline repository.
 	
 	\section{Baseline results}
-	The baseline results shown in Table \ref{table-baseline-scores} have been computed by running the 2019 baseline on the datasets from the previous year's DIHARD challenge (2018). This is because it was not possible to register for DIHARD 2019 before the deadline, and thus access to 2019 datasets was denied.
+	The baseline results shown in Table \ref{table-baseline-scores} have been computed by running the 2019 baseline on the datasets from previous year's DIHARD challenge (2018). This is because it was not possible to register for DIHARD 2019 before the deadline, and thus access to 2019 datasets was denied.
 	
 	Luckily the 2018 datasets were released as a part of the June LDC newsletter. Since the basic problem statement of the challenge remains the same as last year, the last year's datasets can still be used without any trouble. But this unfortunately means that it is no longer possible to verify the computed baseline scores with official scores, because the official scores only exist for the 2019 datasets. The only useful hint was found on the webpage at \cite{dihard2-unofficial}, which mentions a rough score of 20.71 on the 2018 development set.
 	
-	The baseline (and all its modifications that use x-vectors) takes about 15 minutes to run on a 32-core machine with 60GB of memory.
+	The baseline (and all its modifications that use x-vectors) takes about 15 minutes to run on a 32-core machine with around 60GB of memory.
 	
 	\begin{table}[h]
 		\centering
@@ -24,21 +24,21 @@
 	\label{table-baseline-scores}
 	\end{table}
 	
-	The results already seem pretty good, considering that the system is not very complex. The best JHU system in DIHARD 2018 had an eval DER of 23.73\%, and that included doing Variational Bayes refinement as an extra step.
+	The results already seem pretty good, considering that the system is not very complex. The best JHU system in DIHARD 2018 had an eval DER of 23.73\%, and that included doing Variational Bayes refinement \cite{sell2015diarization} as an extra step.
 
-	It is also important to mention that Missed Speech and False Alarm are not mentioned in any of the following experiments, because they are always constant (since we work with reference SAD only). Missed speech is always 8.34\% for the dev set and 9.52\% for the eval set. False alarm is always zero for both, as expected. Missed speech should also be zero from the same reason, but it is not because the reference segmentation, which is in the form of HTK label files, have been created by merging overlapping segments. Since overlap detection is not done in any experiement and only flat segmentations (no overlap) are generated, this causes missed speech errors wherever these is overlap. This causes also means that 8.34\% and 9.52\% of the total speech duration (dev and eval respectively) is overlapping speech.
-		
+	It is also important to mention that Missed Speech and False Alarm are not mentioned in any of the following experiments, because they are always constant (since we work with reference SAD only). Missed speech is always 8.34\% for the dev set and 9.52\% for the eval set. False alarm is always zero for both, as expected. Missed speech should also be zero from the same reason, but it is not because overlapping speaker detection is not done in any experiment. Only flat segmentations (no overlap in output segments) are generated, which causes missed speech errors wherever there is overlap. Assuming the reference label files are created correctly, this also means that 8.34\% and 9.52\% of the total speech duration (dev and eval respectively) is overlapping.
+	
 	\section{Using Existing Pre-trained Models}
-	The first set of experiments was to see how certain pre-trained models freely available on the Internet perform.
+	The first set of experiments was to see how certain pre-trained models freely available on the Internet perform. This was mainly done to get a quick idea of how an i-vector model performs, and whether training one is worthwhile. Another reason was to get comfortable with switching models in the baseline, which was not trivial because a lot of convoluted shell scripts needed to be understood for avoiding mistakes.
 	
 		\subsection{Kaldi VoxCeleb x-vector model}
 			This model was downloaded from the Kaldi models webpage \cite{kaldi_models_webpage}, and closely follows the recipe in \cite{snyder2018x}. The recipe used for training is available in Kaldi at \ttvar{egs/voxceleb/v2}. Similar to the baseline recipe, this model is also trained on a combination of VoxCeleb I and II along with augmentation. Both produce 512-dimensional x-vectors. There are two differences though:
 			\begin{itemize}
 				\item The PLDA backend included in this model is trained on the whole training data, which consists of 1,276,888 utterances. The baseline PLDA backend is trained on a subset where each segment is at least 3 seconds long.
-				\item The PLDA backend here is trained on 200 dimensional x-vectors, which are produced after LDA. The baseline PLDA backend is trained directly on 512-dimensional x-vectors.
+				\item The PLDA backend here is trained after doing LDA dimensionality reduction to 200 on the x-vectors. The baseline PLDA backend is trained directly on 512-dimensional x-vectors.
 			\end{itemize}
 			
-			The results of the diarization recipe modified to use this x-vector extractor DNN are given in Table \ref{table-kaldi-xvec}.
+			The results are given in Table \ref{table-kaldi-xvec}.
 	
 			\begin{table}[h]
 			\centering
@@ -55,10 +55,10 @@
 			\label{table-kaldi-xvec}
 			\end{table}
 		
-			This has already produced a small improvement over the baseline. This could be possibly due to larger amount of training data used to train the PLDA backend, but more likely is due to indeterminism.
+			This has already produced a small improvement over the baseline. The amount of training data used to train this PLDA backend is more than the baseline but the PLDA dimensionality is smaller, so it is hard to pinpoint the exact reason why this has better performance.
 		
 		\subsection{Kaldi VoxCeleb i-vector model}
-			This model was also downloaded from the same Kaldi models webpage as the previous recipe, and closely follows the recipe in \cite{snyder2018x}. The recipe used for training is available in Kaldi at \ttvar{egs/voxceleb/v1}. Similar to the x-vector recipe, the model is also trained on a combination of VoxCeleb I and II, but without augmentation. This is because i-vectors are unable to effectively utilize data augmentation, unlike x-vectors \cite{snyder2018x}. The UBM is trained on 2048 gaussians using all the training utterances. The i-vector extractor is trained using the longest 100k utterances and produces 400-dimensional i-vectors. I-vectors are extracted for all the training utterances, reduced to 200 dimensions using LDA, and then used to train a PLDA backend.
+			This model was also downloaded from the same Kaldi models webpage as the previous recipe, and closely follows the recipe in \cite{snyder2018x}. The recipe used for training is available in Kaldi at \ttvar{egs/voxceleb/v1}. Similar to the x-vector recipe, the model is also trained on a combination of VoxCeleb I and II, but without augmentation. This is because i-vectors are unable to effectively utilize data augmentation, unlike x-vectors \cite{snyder2018x}. The UBM is trained on 2048 Gaussians using all the training utterances. The i-vector extractor is trained using the longest 100k utterances and produces 400-dimensional i-vectors. I-vectors are extracted for all the training utterances, reduced to 200 dimensions using LDA, and then used to train a PLDA backend.
 			
 			The results of the diarization recipe modified to use this i-vector extractor are given in Table \ref{table-kaldi-ivec}. Extracting i-vectors for the dev and eval set take much longer than extracting x-vectors, so this took around 6 hours. Every diarization run with i-vectors took a similar amount of time.
 			
@@ -77,13 +77,13 @@
 				\label{table-kaldi-ivec}
 			\end{table}
 		
-		Clearly, this is much worse than the x-vector model trained on the same VoxCeleb data without augmentation. Augmentation is not used because i-vectors are not able to effectively use data augmentation, unlike x-vectors \cite{snyder2018x}.
+		Clearly, this is much worse than the x-vector model which is expected according to \cite{snyder2018x} and \cite{sell2018diarization}.
 	
 	\section{Training Custom Models}
-	Training our own models was considered because that would allow models to be trained on in-domain data (the DIHARD development set). This should possibly give better results, considering that the model would get a chance to train on several different domains, rather than training on only one domain. The amount of data available in the dev set is relatively small, only 19 hours, so we do not expect great results, but it is worth a shot. The recipes in \ttvar{egs/voxceleb} were used as a starting point for both i-vector extractor and x-vector extractor training.
+	Training our own models was considered because that would allow models to be trained on in-domain data (the DIHARD development set). This should possibly give better results, considering that the model would get a chance to train on data that has similar composition to the evaluation set. The amount of data available in the dev set is relatively small, only 19 hours, so we do not expect great results, but it is a good experiment to try. The recipes in \ttvar{egs/voxceleb} were used as a starting point for both i-vector extractor and x-vector extractor training.
 	
 		\subsection{Training with DIHARD development set}
-			The following results in Table \ref{table-dev-xvec} were obtained by training an x-vector model on the DIHARD development set. The reference RTTM files for the dev set were used to generate 28241 training utterances from 221 speakers. The recipe imposes a minimum feature length of 400 frames and a minimum 8 utterances per speaker, so after filtering only 2726 utterances from 90 speakers were used to train with. This meant that the trained DNN had 90 output nodes. Since the VoxCeleb dataset does not come with reference speech segmentation, the program \ttvar{compute-vad} is used with the configuration given below to classify each frame into speech or non-speech. The embedding layer had 512 dimension. X-vectors were extracted from the full dev set and reduced to 200 dimensions using LDA before training a PLDA backend.
+			The following results in Table \ref{table-dev-xvec} were obtained by training an x-vector model on the DIHARD development set. The reference RTTM files for the dev set were used to generate 28241 training utterances from 221 speakers. The recipe imposes a minimum feature length of 400 frames and a minimum 8 utterances per speaker, so after filtering only 2726 utterances from 90 speakers were used to train with. This meant that the trained DNN had 90 output nodes. Since the VoxCeleb dataset does not come with reference speech segmentation, the program \ttvar{compute-vad} is used with the configuration given below to classify each frame into speech or non-speech.
 			
 			\begin{verbatim}
 			--vad-energy-threshold=5.5
@@ -92,10 +92,7 @@
 			--vad-frames-context=2
 			\end{verbatim}
 			
-			It uses simple energy-based thresholding to generate a speech segmentation. Finally there are 1,277,503 utterances spoken by 7,351 speakers that can be used for training. Although the actual number is much more because of augmentation.
-			
-			The augmentation is done by additive noise (noise, music, babble) using the MUSAN dataset and reverberation using the RIR dataset. The augmentation is done because it was determined in \cite{snyder2018x} that x-vectors exploit large quantities of training data much better than i-vectors, and show a significant increase in performance.
-			
+			The embedding layer had 512 dimension. X-vectors were extracted from the full dev set and reduced to 200 dimensions using LDA before training a PLDA backend.
 			
 			\begin{table}[h]
 				\centering
@@ -112,7 +109,9 @@
 				\label{table-dev-xvec}
 			\end{table}
 		
-		These seem to be pretty bad, but they align with the known fact that x-vectors perform poorly on small amounts of data, as mentioned in the conclusion of \cite{huang2018jhu}. As an additional experiment, augmentation was applied to the dev set. The augmentation was done similar to what the baseline does: 4 variants of the training set were created (reverb, noise, babble, music) and added to the original set, multiplying the number of utterances by 5. This resulted in 141205 utterances from 221 speakers, reduced to 13630 utterances from 90 speakers after filtering. This increased amount of training data resulted in a small increase in performance, as given in Table \ref{table-dev-xvec-aug}. But it still did not increase the perfomance beyond the baseline.
+		These seem to be pretty bad, but they align with the known fact that x-vectors perform poorly on small amounts of data, as mentioned in the conclusion of \cite{huang2018jhu}.
+		
+		As an additional experiment, augmentation was applied to the dev set. The augmentation was done similar to what the baseline does: 4 variants of the training set were created (reverb, noise, babble, music) and added to the original set, multiplying the number of utterances by 5. This resulted in 141,205 utterances from 221 speakers, reduced to 13,630 utterances from 90 speakers after filtering. This increased amount of training data resulted in a small increase in performance, as given in Table \ref{table-dev-xvec-aug}. But it still did not increase the perfomance beyond the baseline.
 		
 		\begin{table}[h]
 			\centering
@@ -137,9 +136,9 @@
 				\hline
 				Dataset & DER (\%) & Speaker error (\%) & JER (\%) \\
 				\hline
-				dev & 25.22 & xx.xx & 58.58 \\
+				dev & 24.90 & 16.56 & 57.68 \\
 				\hline
-				eval & 34.61 & xx.xx & 65.69 \\
+				eval & 33.97 & 24.44 & 64.44 \\
 				\hline
 			\end{tabular}
 			\caption{Scores with i-vector model trained on DIHARD dev.}
@@ -170,11 +169,11 @@
 				\label{table-voxdev-xvec}
 			\end{table}
 		
-		Now the amount of labelled training data available for x-vector training is not small, and it showed a big improvement in performance compared to the model that was just trained on the DIHARD dev set. But it still does not cross the baseline, which was trained with a much larger amount of data.
+		Now that the amount of training data available for x-vector training is not small, it showed a good improvement in performance compared to the model that was just trained on the DIHARD dev set. But it still does not cross the baseline, which was trained with a much larger amount of data.
 		
-		It was also attempted to train an x-vector model after adding augmentations to the combination of VoxCeleb I and DIHARD dev. But attempts for that were unsuccessful as the DNN training kept getting interrupted because of memory allocation failures on the GPU. This was most likely because the GPUs on the grid were shared with other uses, causing available GPU memory to be low. This likely did not happen when training with just the dev set because the training was much faster, reducing the chances that someone submits a parallel GPU job. This could possibly be fixed by setting the GPU to exclusive mode using $nvidia-smi -c 3$, but superuser access was needed for that.
+		It was also attempted to train an x-vector model after adding augmentations to the combination of VoxCeleb I and DIHARD dev. But attempts for that were unsuccessful as the DNN training kept getting interrupted because of memory allocation failures on the GPU. This was most likely because the GPUs on the grid were shared with other users, causing available GPU memory to be low. This problem likely did not happen when training with just the dev set because the training was much faster, reducing the chances of someone submitting a parallel GPU job. This could possibly be fixed by setting the GPU to exclusive mode using the \ttvar{nvidia-smi} tool, but superuser access was needed for that.
 				
-		An i-vector model was also trained on the combination of VoxCeleb I and DIHARD dev set. The results are given in Table \ref{table-voxdev-ivec}. There was an improvement compared to the model only trained on the dev set, which is expected.
+		An i-vector model was also trained on the combination of VoxCeleb I and DIHARD dev set. The results are given in Table \ref{table-voxdev-ivec}. There was an improvement compared to the i-vector model only trained on the dev set, which is expected. Although this time with increased data it did not outperform the x-vector model.
 		
 		\begin{table}[h]
 			\centering
@@ -192,7 +191,7 @@
 		\end{table}
 		
 	\section{Feature concatenation}
-	For the final set of experiments, a new approach was tried for speaker embeddings. No new i-vector or x-vector extractor was trained in these experiments. Instead, the Kaldi pre-trained models were used to extract both i-vectors and x-vectors from the combination of VoxCeleb I and DIHARD dev set. These two sets of vectors were concatenated to form a set of new vectors (called c-vectors henceforth for simplicity). These c-vectors were reduced in dimension using LDA and later used to train a PLDA backend using the speaker labels available. To accommodate for this change, a new possible value was added to the $--vector_type$ argument in the diarization challenge recipe, which resulted in the extraction of both i-vectors and x-vectors from the dev and eval sets and concatenation.
+	For the final set of experiments, a new approach was tried for speaker embeddings. No new i-vector or x-vector extractor was trained in these experiments. Instead, the Kaldi pre-trained models were used to extract both i-vectors and x-vectors from the combination of VoxCeleb I and DIHARD dev set. These two sets of vectors were concatenated to form a set of new vectors (called c-vectors henceforth for simplicity). These c-vectors were reduced in dimension using LDA and later used to train a PLDA backend using the speaker labels available. The diarization recipe was also updated to extract both i-vectors and x-vectors from the dev and eval sets and concatenate them if c-vectors were to be used.
 	
 	This new PLDA model was trained with varying dimensions from 200 up to 800. The results are given below in Table \ref{table-cvector}.
 	\begin{table}[h]
@@ -214,23 +213,25 @@
 		\label{table-cvector}
 	\end{table}
 
-	This best model is when c-vectors are 800 dimensional, at 24.64\% DER on the eval set. This is a significant improvement over the baseline, which is almost 2\% higher.
+	This best model is when c-vectors are 800 dimensional, at 24.64\% DER on the eval set. This is a significant improvement over the baseline, which is almost 2\% higher in absolute terms and 7.3\% higher in relative terms.
+	
+	A new Kaldi C++ executable called \ttvar{concat-vectors} was written to concatenate two sets of arbitrary vectors because there was no program to do this that worked with vectors. There are executables called \ttvar{append-vector-to-feats} and \ttvar{concat-feats}, but they only work with matrices because feats are stored as matrices in Kaldi.
 	
 	\section{Hyperparameters}
 		This sections describes the hyperparameters that were used to run the above experiments. Due to lack of time, it was not possible to experiment with tuning any of these and the defaults existing in the baseline or the reference training recipes were used.\\
 		\subsection{MFCC feature vector length}
 			The x-vector systems used 30 dimensional MFCCs because Kaldi's pretrained x-vector extractor DNN had 30 inputs. For consistency, the MFCC dimensionality for the the self trained x-vector extractor DNN was also set to 30.
-			Similarly, the i-vector systems used 24 dimensional MFCCs because Kaldi's pre-trained UBM and i-vector extractor was trained with 24 dimensional Gaussians. The self trained i-vector extractor also used the same.
+			Similarly, the i-vector systems used 72 dimensional features (24 dimensional MFCCs with delta and delta-delta coefficients added) because Kaldi's pre-trained UBM and i-vector extractor was trained with 72 dimensional Gaussians. The self trained i-vector extractor also used the same.
 		\subsection{Speaker Embedding Length}
-			This is an obvious one because it has a significant effect on the amount of speaker information that is present in each embedding. The Kaldi pre-trained models extracted 400 dimensional i-vectors, and the self-trained i-vector extractor was configured to do the same. Similarly in the x-vector case it was 512.
+			This is an obvious one because it has a significant effect on the amount of speaker information that is present in each embedding. The Kaldi pre-trained models extracted 400 dimensional i-vectors, and the self-trained i-vector extractor was configured to do the same. Similarly in the x-vector case the length was always 512.
 		\subsection{Segment Length and Overlap}
 		The baseline diarization system used uniform segmentation with segment length 1.5 sec and 0.75 sec overlap (50\%). This was not changed in any of the diarization runs.
 		\subsection{Clustering Threshold}
 		The threshold during the clustering step in diarization is in terms of the log likelihood ratio provided by PLDA scores. In a perfectly caliberated system, the score is 0. The best threshold was selected from the list -0.5, -0.4, -0.3, -0.2, -0.1, -0.05, 0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5 using the computed DER on the dev set.
 		\subsection{Number of UBM Gaussians}
-		The number of Gaussians in the self-trained trained UBM was always 2048.
+		The number of Gaussians in the pre-trained and self-trained trained UBMs was always 2048.
 		\subsection{PLDA dimension}
-		The dimensionality of the PLDA backend was always 200, except in the c-vectors experiment where it varied from 200 to 800.
+		The dimensionality of the PLDA backend was always 200, except in the c-vectors experiment where it varied from 200 to 800, and the baseline where it was 512.
 
 	\section{Discussion of results}
 		Three main experiements were carried out. The first included running the baseline with pre-trained i-vector and x-vector models available on the Kaldi website that have been trained on a large amount of data from the VoxCeleb dataset. The VoxCeleb dataset consists of audio taken from YouTube videos recorded in a variety of conditions, so there is significant channel, environment, and speaker variance. Other baseline parameters like segment length, overlap, clustering threshold, PLDA dimension were left unchanged. The x-vector model resulted in a similar performance as the baseline (26.42\%), and the i-vector model performed much worse with 32.03\%. This is expected as x-vectors have been found to out-perform i-vectors \cite{snyder2018x}, especially with data augmentation.

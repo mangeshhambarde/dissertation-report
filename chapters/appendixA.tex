@@ -1,2 +1,27 @@
-\chapter{An Appendix of Some Kind}
+\chapter{Appendix A: RTTM File Format Specification}
+
+RTTM files are text files containing one turn per line, each line containing ten space-delimited fields:
+\begin{itemize}
+	\item Type – segment type; should always by “SPEAKER”
+	\item File ID – file name; basename of the recording minus extension (e.g., “rec1\_a”)
+	\item Channel ID – channel (1-indexed) that turn is on; should always be “1”
+	\item Turn Onset – onset of turn in seconds from beginning of recording
+	\item Turn Duration – duration of turn in seconds
+	\item Orthography Field – should always by “\textless NA\textgreater”
+	\item Speaker Type – should always be “\textless NA\textgreater”
+	\item Speaker Name – name of speaker of turn; should be unique within scope of each file
+	\item Confidence Score – system confidence (probability) that information is correct; should always be “\textless NA\textgreater”
+	\item Signal Lookahead Time – should always be “\textless NA\textgreater”
+\end{itemize}
+
+
+
+For instance:
+\small
+
+SPEAKER CMU 20020319-1400 d01 NONE 1 130.430000 2.350 \textless NA\textgreater \textless NA\textgreater juliet \textless NA\textgreater \textless NA\textgreater
+
+SPEAKER CMU 20020319-1400 d01 NONE 1 157.610000 3.060 \textless NA\textgreater \textless NA\textgreater tbc \textless NA\textgreater \textless NA\textgreater
+
+SPEAKER CMU 20020319-1400 d01 NONE 1 130.490000 0.450 \textless NA\textgreater \textless NA\textgreater chek \textless NA\textgreater \textless NA\textgreater
 

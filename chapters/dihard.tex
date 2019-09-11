@@ -3,10 +3,10 @@
 This chapter discusses some specifics of the DIHARD challenge including the rules, evaluation mechanisms and datasets. Most of these details are published in \cite{ryant2019second} and \cite{ryant2019second2}.
 
 \section{Task Definition}
-The goal of the challenge is to automatically split audio recordings into segments based on speaker identity. These segments should be output in the form of Rich Transcription Time Marked (RTTM) files. Small pauses of less than 200 ms should be merged into a single contiguous segment. During these pauses the speaker is not considered to produce any vocalization. This obviously includes speech, but also speech errors, infant babbling, breaths, coughs, lip smacks, sneeze, laughs, humming. Basically any sound produced by the speaker by using the human vocal apparatus.
+The goal of the challenge is to automatically split audio recordings into segments based on speaker identity. These segments should be output in the form of Rich Transcription Time Marked (RTTM) files. Please see Appendix A for the RTTM format specification. Small pauses of less than 200 ms should be merged into a single contiguous segment. During these pauses the speaker is not considered to produce any vocalization. This obviously includes speech, but also speech errors, infant babbling, breaths, coughs, lip smacks, sneeze, laughs, humming. Basically any sound produced by the speaker by using the human vocal apparatus.
 
 \section{Evaluation Tracks}
-As a participant, there are four possible tracks to participate in. Each of these have their own leader boards. There are two input conditions - single channel and multichannel audio. There are also two SAD conditions - reference SAD, where manually transcribed segment boundaries are made available for use, and system SAD, where the participant is expected to do their own SAD algorithms on the raw audio. These two conditions give rise to four possible tracks.
+As a participant, there are four possible tracks to participate in. Each of these have their own leader boards. There are two input conditions - single channel and multichannel audio. There are also two SAD conditions - reference SAD, where manually transcribed segment boundaries are made available for use, and system SAD, where the participant is expected to run their own SAD algorithms on the raw audio. These two conditions give rise to four possible tracks.
 
 \begin{itemize}
 	\item Track 1 - single channel audio using reference SAD
@@ -15,7 +15,7 @@ As a participant, there are four possible tracks to participate in. Each of thes
 	\item Track 4 - multichannel audio using system SAD
 \end{itemize}
 
-\section{Detail on Data Provided}
+\section{Details on Data Provided}
 
 The single channel audio may be taken from a single distant microphone, or from one of the channels from a microphone array, head-mounted microphones, or a mix of these. The multichannel audio is drawn from the CHiME-5 dinner party corpus, which consists of conversational speech from dinner parties held in real homes. It is composed of several different recording sessions - each corresponding to a different party. The house had multiple arrays, so each session contains output from multiple distant microphone arrays, each containing multiple channels. Participants are required to generate one diarization output per array and are free to use any number of channels from the array. For example, if a recording session contains 4 microphone arrays, participants are expected to generate 4 RTTM files.
 
@@ -67,7 +67,7 @@ The outputs of the systems are judged by two metrics.
 	It can be understood from this definition that the JER never exceeds 100\%.
 	
 \section{Datasets}
-Since we work with the 2018 DIHARD datasets, we only describe their composition and not of the 2019 datasets. The development set consists of approximately 19 hours of 5-10 minute audio samples drawn from the domains given in Table \ref{table-dihard-dev-composition}. The evaluation set consists of samples drawn from the same domains and sources with a few exceptions. It has 21 hours of 5-10 minute long speech samples. All audio files are 16 KHz single channel FLAC files.
+Since we work with the 2018 DIHARD datasets, we only describe their composition and not of the 2019 datasets. Please refer to Appendix B for a detailed description of the domains and sources. The development set consists of approximately 19 hours of 5-10 minute audio samples drawn from the domains given in Table \ref{table-dihard-dev-composition}. The evaluation set consists of samples drawn from the same domains and sources with a few exceptions. It has 21 hours of 5-10 minute long speech samples. All audio files are 16 KHz single channel FLAC files.
 
 \begin{table}[h]
 	\centering

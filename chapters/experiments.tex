@@ -1,5 +1,6 @@
 \chapter{Experiments and Results}
 	\section{Modifications to the baseline scripts}
+	The baseline scripts were modified to make it easier to running various experiments. Arguments were added to specify the type of speaker embedding to be used, the trained model files to be used, the PCA dimension to be used for etc. Some new scripts were also added. Most of the modifications are present in the files \ttvar{recipes/track1/run.sh} and \ttvar{scripts/alltracksrun.sh} from the DIHARD baseline repository.
 	
 	\section{Baseline results}
 	The baseline results shown in Table \ref{table-baseline-scores} have been computed by running the 2019 baseline on the datasets from the previous year's DIHARD challenge (2018). This is because it was not possible to register for DIHARD 2019 before the deadline, and thus access to 2019 datasets was denied.
@@ -82,7 +83,20 @@
 	Training our own models was considered because that would allow models to be trained on in-domain data (the DIHARD development set). This should possibly give better results, considering that the model would get a chance to train on several different domains, rather than training on only one domain. The amount of data available in the dev set is relatively small, only 19 hours, so we do not expect great results, but it is worth a shot. The recipes in \ttvar{egs/voxceleb} were used as a starting point for both i-vector extractor and x-vector extractor training.
 	
 		\subsection{Training with DIHARD development set}
-			The following results in Table \ref{table-dev-xvec} were obtained by training an x-vector model on the DIHARD development set. The reference RTTM files for the dev set were used to generate 28241 training utterances from 221 speakers. The recipe imposes a minimum feature length of 400 frames and a minimum 8 utterances per speaker, so after filtering only 2726 utterances from 90 speakers were used to train with. This meant that the trained DNN had 90 output nodes. The embedding layer had 512 dimension. X-vectors were extracted from the full dev set and reduced to 200 dimensions using LDA before training a PLDA backend.
+			The following results in Table \ref{table-dev-xvec} were obtained by training an x-vector model on the DIHARD development set. The reference RTTM files for the dev set were used to generate 28241 training utterances from 221 speakers. The recipe imposes a minimum feature length of 400 frames and a minimum 8 utterances per speaker, so after filtering only 2726 utterances from 90 speakers were used to train with. This meant that the trained DNN had 90 output nodes. Since the VoxCeleb dataset does not come with reference speech segmentation, the program \ttvar{compute-vad} is used with the configuration given below to classify each frame into speech or non-speech. The embedding layer had 512 dimension. X-vectors were extracted from the full dev set and reduced to 200 dimensions using LDA before training a PLDA backend.
+			
+			\begin{verbatim}
+			--vad-energy-threshold=5.5
+			--vad-energy-mean-scale=0.5
+			--vad-proportion-threshold=0.12
+			--vad-frames-context=2
+			\end{verbatim}
+			
+			It uses simple energy-based thresholding to generate a speech segmentation. Finally there are 1,277,503 utterances spoken by 7,351 speakers that can be used for training. Although the actual number is much more because of augmentation.
+			
+			The augmentation is done by additive noise (noise, music, babble) using the MUSAN dataset and reverberation using the RIR dataset. The augmentation is done because it was determined in \cite{snyder2018x} that x-vectors exploit large quantities of training data much better than i-vectors, and show a significant increase in performance.
+			
+			
 			\begin{table}[h]
 				\centering
 				\begin{tabular}{|c|c|c|c|}
@@ -158,7 +172,7 @@
 		
 		Now the amount of labelled training data available for x-vector training is not small, and it showed a big improvement in performance compared to the model that was just trained on the DIHARD dev set. But it still does not cross the baseline, which was trained with a much larger amount of data.
 		
-		It was also attempted to train an x-vector model after adding augmentations to the combination of VoxCeleb I and DIHARD dev. But attempts for that were unsuccessful as the neural network training kept getting interrupted because of memory allocation failures on the GPU. This was most likely because the GPUs on the grid were shared with other uses, causing available GPU memory to be low. This likely did not happen when training with just the dev set because the training was much faster, reducing the chances that someone submits a parallel GPU job. This could possibly be fixed by setting the GPU to exclusive mode using $nvidia-smi -c 3$, but superuser access was needed for that.
+		It was also attempted to train an x-vector model after adding augmentations to the combination of VoxCeleb I and DIHARD dev. But attempts for that were unsuccessful as the DNN training kept getting interrupted because of memory allocation failures on the GPU. This was most likely because the GPUs on the grid were shared with other uses, causing available GPU memory to be low. This likely did not happen when training with just the dev set because the training was much faster, reducing the chances that someone submits a parallel GPU job. This could possibly be fixed by setting the GPU to exclusive mode using $nvidia-smi -c 3$, but superuser access was needed for that.
 				
 		An i-vector model was also trained on the combination of VoxCeleb I and DIHARD dev set. The results are given in Table \ref{table-voxdev-ivec}. There was an improvement compared to the model only trained on the dev set, which is expected.
 		

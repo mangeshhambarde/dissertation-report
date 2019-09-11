@@ -76,6 +76,8 @@ Since we work with the 2018 DIHARD datasets, we only describe their composition 
 \section{Evaluation Rules}
 The DIHARD challenge is an open evaluation, and the system outputs are supposed to be generated locally and submitted to LDC for scoring. Since portions of the test data are available in following corpora that was already widely available, usage of them for training is prohibited.
 
+	The NIST evaluations have a practice in which a forgiveness collar is applied to either sides of reference segments, to get rid of errors from inconsistent human annotations and uncertainty about when a speaker begins or ends. These collars are not scored. This does not apply for DIHARD and there are no forgiveness collars used. Overlapping speech is also evaluated - so the ideal system is expected to output overlapping segments if two speakers overlap in the source audio. A system that generates only flat segmentations (no overlap) will have higher DER because the overlapping segments could give rise to missed speech and speaker errors.
+
 \begin{itemize}
 	\item DCIEM Map Task Corpus (LDC96S38)
 	\item MIXER6 Speech (LDC2013S03)

@@ -1,6 +1,14 @@
 \chapter{Baseline setup}
 
 \section{Overview}
+
+\begin{figure}[h]
+	\includegraphics[width=9cm]{figures/baseline.png}
+	\centering
+	\caption{Block diagram of DIHARD diarization baseline.}
+	\label{fig:fig-baseline}
+\end{figure}
+
 There are three software baselines provided by the DIHARD II organizers, each for the parts of speech enhancement, speech activity detection and diarization. The speech enhancement baseline and the speech activity detection are meant to be used together in the case of system-generated SAD (tracks 2 and 4), but since we only work with reference SAD, we do not need them. Thus we will only describe the diarization baseline in the following sections.
 
 The diarization baseline is based on the best performing submission \cite{sell2018diarization} from John Hopkins University (JHU) in the previous year's DIHARD challenge (DIHARD I). There are 4 Kaldi recipes, each for an evaluation track, but we will focus only on the recipe for Track 1 since we only work with single channel audio and gold speech segmentation.
